@@ -45,7 +45,7 @@ class CACD_Dataset(Dataset):
             ])
         img = trans(img)
 
-        return img, img_age, img_id
+        return img, int(img_age), img_id
 
     def __len__(self):
         return len(self.img_list)

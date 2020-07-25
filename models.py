@@ -69,10 +69,15 @@ class Id_Dis(nn.Module):
 # class Age_Reg(nn.Module):
 
 
+# print(dataset[0][2])
 
+a = [x for x in dataset if x[1] == 14]
+print(a)
 
-# for (img, age, name) in dataset:
-#     print(age, name)
+# for i, (img, age, name) in enumerate(dataset):
+#     print(i, age, name)
+
+# print(dataset.__len__())
 
 
 # --------------Rough Test-------------------
