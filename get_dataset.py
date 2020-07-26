@@ -1,6 +1,8 @@
 '''
 This py file is customised for importing CACD2000 dataset
 Inspired by https://blog.csdn.net/woshicao11/article/details/78318156
+
+
 '''
 import torch
 from torch.utils.data import Dataset
@@ -12,10 +14,11 @@ from torchvision import transforms
 
 
 def get_img_list(root):
-    img_list = []
-    pattern = re.compile('([0-9]+)(\_)(.+)(\_[0-9]+)')
-
-    for img_name in os.listdir(root):
+    files = os.listdir(root)
+    pattern = re.compile('([0-9]+)(\_)(.+)(\_.+)')
+    img_list = [[None, '-1', '']] * len(files)
+    
+    for img_name in files:
         img_match = re.search(pattern, img_name)
         
         img_path = os.path.join(root, img_name)
@@ -27,12 +30,14 @@ def get_img_list(root):
     return img_list
 
 
-# pprint.pprint(get_img_list('./14'))
+pprint.pprint(get_img_list('./14'))
 
 
 class CACD_Dataset(Dataset):
     def __init__(self, root):
         self.img_list = get_img_list(root)
+
+
 
     def __getitem__(self, idx):
         img_path, img_age, img_id = self.img_list[idx]
@@ -42,7 +47,7 @@ class CACD_Dataset(Dataset):
             transforms.Resize(250),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # from 0,1 to -1,1
-            ])
+        ])
         img = trans(img)
 
         return img, int(img_age), img_id
