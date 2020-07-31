@@ -1,4 +1,5 @@
-import os, numpy, argparse, random
+import os, random
+import numpy as np
 from matplotlib import pyplot as plt
 
 import torch
@@ -9,16 +10,17 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision.models import vgg19
 
-from get_dataset import *
+from get_dataset import CACD_Dataset
+from options import opt
 
-# Create the dataset
+# dataset
 dataset = CACD_Dataset('./14')
 
-# Create the dataloader
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=100,
-                                         shuffle=True, num_workers=2)
+# dataloader
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
+                                         shuffle=True, num_workers=1)
 
-# Decide which device we want to run on
+# use cpu or gpu as device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Models
@@ -43,7 +45,7 @@ class Gen(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),  # [1, 64, 7, 7]
         )
-        self.deocde = nn.Sequential(
+        self.decode = nn.Sequential(
             nn.ConvTranspose2d(65, 64, 3, stride=2),  # 15
             nn.ReLU(True),
             nn.ConvTranspose2d(64, 64, 3, stride=2),  # 31
@@ -56,11 +58,11 @@ class Gen(nn.Module):
             nn.ReLU(True),
         )
 
-    def forward(self, x, con):
+    def forward(self, x, con, batch_size):
         latent_vec = self.encode(x)
-        latent_vec = torch.cat((torch.reshape(self.embed(con), (1, 1, 7, 7)), latent_vec), 1)
+        latent_vec = torch.cat((torch.reshape(self.embed(con), (batch_size, 1, 7, 7)), latent_vec), 1)
         output = self.decode(latent_vec)
-        output = output.view(3, 250, 250)
+        # output = output.view(3, 250, 250)  # not working for mini-batch
         return output
 
 class Age_Dis(nn.Module):
@@ -96,12 +98,11 @@ class Age_Dis(nn.Module):
             nn.Sigmoid(),
         )
 
-    def forward(self, x, con):
+    def forward(self, x, con, batch_size):
         latent_vec = self.encode(x)
-        latent_vec = torch.cat((torch.reshape(self.embed(con), (1, 1, 7, 7)), latent_vec), 1)
+        latent_vec = torch.cat((torch.reshape(self.embed(con), (batch_size, 1, 7, 7)), latent_vec), 1)
         output = self.regre(latent_vec)
         return output
-
 
 class Id_Dis(nn.Module):
     '''
@@ -136,36 +137,98 @@ class Id_Dis(nn.Module):
         output = self.model(input_img)
         return output
 
-
-
 # class Age_Reg(nn.Module):
 
 
 
-gen     = Gen()
-age_dis = Age_Dis()
+gen     = Gen().to(device)
+age_dis = Age_Dis().to(device)
+id_dis  = Id_Dis().to(device)
 
 loss_func = nn.BCELoss()
 
 optim_gen     = optim.Adam(gen.parameters(),     lr=0.0002, betas=(0.5, 0.999))
 optim_age_dis = optim.Adam(age_dis.parameters(), lr=0.0002, betas=(0.5, 0.999))
+optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 
 # -----------------training----------------
-# 200726
+# 200729
 
-# for epoch in range(10):
+if __name__ == '__main__':
+    for epoch in range(10):
+        for (src_img, src_age, tgt_img) in dataloader:  # 100, Tensor
+            # put mini-batch into device
+            src_img = src_img.to(device)
+            src_age = src_age.to(device)
+            tgt_img = tgt_img.to(device)
+            
+            # get batch length
+            batch_len = src_age.size()[0]
 
-def p(x):
-    print(x)
+            # ------ train age D
+            age_dis.zero_grad()
+            
+            # train true images
+            label = torch.full(src_age.size(), 1, device=device)
+            output = age_dis(src_img, src_age, batch_len).view(-1)
+            loss = loss_func(output, label)
+            loss.backward()
 
+            # train false images
+            syn_age = torch.tensor(np.random.randint(1, 80, (src_age.size())), dtype=torch.int64).to(device)
+            syn_img = gen(src_img, syn_age, batch_len)
+            
+            label.fill_(0)
+            output = age_dis(syn_img.detach(), syn_age, batch_len).view(-1)  # use detach() to fix G
+            loss = loss_func(output, label)
+            loss.backward()
+
+            # update weights
+            optim_age_dis.step()
+
+            # ------ train G
+            gen.zero_grad()
+            label.fill_(1)
+
+            output = age_dis(syn_img, syn_age, batch_len).view(-1)
+            loss = loss_func(output, label)
+            loss.backward()
+
+            optim_gen.step()
+
+            print(loss)
+
+
+'''
+# create your optimizer
+optimizer = optim.SGD(net.parameters(), lr=0.01)
+
+# in your training loop:
+optimizer.zero_grad()   # zero the gradient buffers
+output = net(input)
+loss = criterion(output, target)
+loss.backward()
+optimizer.step()        # Does the update
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 200727
+# tooooo slooooooow
 # for img in dataset:
 #     lst = [x for x in dataset if x[2] == img[2]]
 #     p(lst[random.randint(0, len(lst) - 1)][2])
-
-
-p(type(dataset))
-
-
 
 # ----------------test---------------------
 # 200725
@@ -196,7 +259,6 @@ p(type(dataset))
 # out = age_dis(img1, torch.tensor([14]))
 
 # print(out.size())
-
 
 # --------------Rough Test-------------------
 # 200723
