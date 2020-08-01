@@ -84,7 +84,7 @@ if __name__ == '__main__':
             label.fill_(1)
             output = age_dis(syn_img, syn_age, batch_len).view(-1)
             loss = loss_func(output, label)
-            loss.backward()
+            loss.backward(retain_graph=True)
             output = id_dis(syn_img, syn_img).view(-1)
             loss = loss_func(output, label)
             loss.backward()
@@ -93,6 +93,9 @@ if __name__ == '__main__':
             print(loss)
         break
 
+# RuntimeError: Trying to backward through the graph a second time, but the
+# buffers have already been freed. Specify retain_graph=True when calling
+# backward the first time.
 
 '''
 # create your optimizer
