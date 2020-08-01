@@ -117,4 +117,7 @@ class Id_Dis(nn.Module):
         output = self.model(input_img)
         return output
 
-# class Age_Reg(nn.Module):
+class Age_Reg(nn.Module):
+    def __init__(self):
+        super(Age_Reg, self).__init__()
+        
