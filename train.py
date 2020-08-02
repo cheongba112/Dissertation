@@ -37,7 +37,7 @@ optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 # 200731
 
 if __name__ == '__main__':
-    for epoch in range(10):
+    for epoch in range(20):
         for i, (src_img, src_age, tgt_img) in enumerate(dataloader):
             # put mini-batch into device
             src_img = src_img.to(device)
@@ -94,10 +94,10 @@ if __name__ == '__main__':
 
             print(loss)
             
-            if i % 100:
+            if not i % 100:
                 utils.save_image(syn_img, './%d_%d_img.jpg' % (epoch, i), normalize=True)
 
-        break
+        # break
 
     # torch.save(gen.state_dict(), 'g.pth')
 
