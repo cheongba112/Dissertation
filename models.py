@@ -120,4 +120,7 @@ class Id_Dis(nn.Module):
 class Age_Reg(nn.Module):
     def __init__(self):
         super(Age_Reg, self).__init__()
-        
+        self.model = nn.Sequential()
+
+    def forward(self, x):
+        return x        

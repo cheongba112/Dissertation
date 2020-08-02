@@ -5,13 +5,14 @@ from matplotlib import pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
+from torchvision import utils
 
 from models import *
 from get_dataset import CACD_Dataset
 from options import opt
 
 # dataset
-dataset = CACD_Dataset('./14')
+dataset = CACD_Dataset(opt.dataroot)
 
 # dataloader
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=1)
@@ -37,7 +38,7 @@ optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 
 if __name__ == '__main__':
     for epoch in range(10):
-        for (src_img, src_age, tgt_img) in dataloader:  # 100, Tensor
+        for i, (src_img, src_age, tgt_img) in enumerate(dataloader):
             # put mini-batch into device
             src_img = src_img.to(device)
             src_age = src_age.to(device)
@@ -91,12 +92,27 @@ if __name__ == '__main__':
             loss.backward()
             optim_gen.step()
 
-            # print(loss)
-        # break
+            print(loss)
+            
+            if i % 100:
+                utils.save_image(syn_img, './%d_%d_img.jpg' % (epoch, i), normalize=True)
+
+        break
+
+    # torch.save(gen.state_dict(), 'g.pth')
+
 
 # RuntimeError: Trying to backward through the graph a second time, but the
 # buffers have already been freed. Specify retain_graph=True when calling
 # backward the first time.
+
+'''
+torch.save(model.state_dict(), filepath)
+
+#Later to restore:
+model.load_state_dict(torch.load(filepath))
+model.eval()
+'''
 
 '''
 # create your optimizer
