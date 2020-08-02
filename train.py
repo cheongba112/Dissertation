@@ -37,7 +37,7 @@ optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 # 200731
 
 if __name__ == '__main__':
-    for epoch in range(20):
+    for epoch in range(200):
         for i, (src_img, src_age, tgt_img) in enumerate(dataloader):
             # put mini-batch into device
             src_img = src_img.to(device)
