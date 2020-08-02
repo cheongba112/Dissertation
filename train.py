@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
             print(loss)
             
-            if not i % 100:
+            if not i % 10:
                 utils.save_image(syn_img, './%d_%d_img.jpg' % (epoch, i), normalize=True)
 
         # break
