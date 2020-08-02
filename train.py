@@ -85,11 +85,11 @@ if __name__ == '__main__':
             label.fill_(1)
             output = age_dis(syn_img, syn_age, batch_len).view(-1)
             loss_age = loss_func(output, label)
-            # loss.backward(retain_graph=True)
+            loss_age.backward(retain_graph=True)
             output = id_dis(syn_img, syn_img).view(-1)
             loss_id = loss_func(output, label)
             loss = loss_age + loss_id
-            loss.backward()
+            loss_id.backward()
             optim_gen.step()
 
             print(loss)
