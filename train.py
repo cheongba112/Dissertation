@@ -48,22 +48,22 @@ if __name__ == '__main__':
             batch_len = src_age.size()[0]
 
             # train age D
-            age_dis.zero_grad()
+            # age_dis.zero_grad()
             # train true images
             label = torch.full(src_age.size(), 1, device=device)  # label initialized with 1
-            output = age_dis(src_img, src_age, batch_len).view(-1)
-            loss = loss_func(output, label)
-            loss.backward()
+            # output = age_dis(src_img, src_age, batch_len).view(-1)
+            # loss = loss_func(output, label)
+            # loss.backward()
             # generate images
             syn_age = torch.tensor(np.random.randint(1, 80, (src_age.size())), dtype=torch.int64).to(device)
             syn_img = gen(src_img, syn_age, batch_len)
             # train false images
-            label.fill_(0)
-            output = age_dis(syn_img.detach(), syn_age, batch_len).view(-1)  # use detach() to fix G
-            loss = loss_func(output, label)
-            loss.backward()
+            # label.fill_(0)
+            # output = age_dis(syn_img.detach(), syn_age, batch_len).view(-1)  # use detach() to fix G
+            # loss = loss_func(output, label)
+            # loss.backward()
             # update weights
-            optim_age_dis.step()
+            # optim_age_dis.step()
 
             # train id D
             id_dis.zero_grad()
@@ -83,16 +83,16 @@ if __name__ == '__main__':
             # train G
             gen.zero_grad()
             label.fill_(1)
-            output = age_dis(syn_img, syn_age, batch_len).view(-1)
-            loss_age = loss_func(output, label)
-            loss_age.backward(retain_graph=True)
+            # output = age_dis(syn_img, syn_age, batch_len).view(-1)
+            # loss_age = loss_func(output, label)
+            # loss_age.backward(retain_graph=True)
             output = id_dis(syn_img, syn_img).view(-1)
             loss_id = loss_func(output, label)
-            loss = loss_age + loss_id
+            # loss = loss_age + loss_id
             loss_id.backward()
             optim_gen.step()
 
-            print(loss)
+            print(loss_id)
             
             if not i % 10:
                 utils.save_image(syn_img, './%d_%d_img.jpg' % (epoch, i), normalize=True)
