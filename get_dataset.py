@@ -13,7 +13,7 @@ from torchvision import transforms
 def open_image(img_path):
     img = Image.open(img_path)
     trans = transforms.Compose([
-        transforms.Resize(250),
+        transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # from 0,1 to -1,1
     ])
@@ -48,7 +48,7 @@ def get_img_list(root):
     return img_list
 
 
-class CACD_Dataset(Dataset):
+class get_dataset(Dataset):
     def __init__(self, root):
         self.img_list = get_img_list(root)
 
@@ -63,5 +63,5 @@ class CACD_Dataset(Dataset):
 if __name__ == '__main__':
     pprint.pprint(get_img_list('./14'), width=999)
 
-    cacd = CACD_Dataset('./CACD2000')  # 3+ seconds
+    cacd = get_dataset('./CACD2000')  # 3+ seconds
     pprint.pprint(cacd[0])

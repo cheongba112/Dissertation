@@ -8,22 +8,23 @@ import torch.optim as optim
 from torchvision import utils
 
 from models import *
-from get_dataset import CACD_Dataset
+from get_dataset import get_dataset
 from options import opt
 
 # dataset
-dataset = CACD_Dataset(opt.dataroot)
+dataset = get_dataset(opt.dataroot)
 
 # dataloader
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=1)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
+                                         shuffle=True, num_workers=1)
 
 # use cpu or gpu as device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # model
 gen     = Gen().to(device)
-age_dis = Age_Dis().to(device)
-id_dis  = Id_Dis().to(device)
+age_dis = AgeD().to(device)
+id_dis  = IdD().to(device)
 
 # loss function
 loss_func = nn.BCELoss()
@@ -33,75 +34,88 @@ optim_gen     = optim.Adam(gen.parameters(),     lr=0.0002, betas=(0.5, 0.999))
 optim_age_dis = optim.Adam(age_dis.parameters(), lr=0.0002, betas=(0.5, 0.999))
 optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 
-# -----------------training----------------
-# 200731
 
+# -----------------training----------------
 if __name__ == '__main__':
-    for epoch in range(50):
+    for epoch in range(opt.epoch_num):
         for i, (src_img, src_age, tgt_img) in enumerate(dataloader):
-            # put mini-batch into device
+            # put batch into device
             src_img = src_img.to(device)
-            src_age = src_age.to(device)
             tgt_img = tgt_img.to(device)
-            
+            src_age = src_age.to(device)
+            syn_age = torch.tensor(np.random.randint(10, 71, src_age.size()),
+                                   dtype=torch.int64).to(device)
+            label = torch.full(src_age.size(), 1, device=device)
+
             # get batch length
             batch_len = src_age.size()[0]
 
-            # train age D
-            # age_dis.zero_grad()
-            # train true images
-            label = torch.full(src_age.size(), 1, device=device)  # label initialized with 1
-            # output = age_dis(src_img, src_age, batch_len).view(-1)
-            # loss = loss_func(output, label)
-            # loss.backward()
-            # generate images
-            syn_age = torch.tensor(np.random.randint(1, 80, (src_age.size())), dtype=torch.int64).to(device)
-            syn_img = gen(src_img, syn_age, batch_len)
-            # train false images
-            # label.fill_(0)
-            # output = age_dis(syn_img.detach(), syn_age, batch_len).view(-1)  # use detach() to fix G
-            # loss = loss_func(output, label)
-            # loss.backward()
-            # update weights
-            # optim_age_dis.step()
+            # generate synthesized images
+            syn_img = gen(src_img, syn_age)
 
-            # train id D
-            id_dis.zero_grad()
+            # ------------------------------------------------------------------
+            # train age D
             # train true images
             label.fill_(1)
-            output = id_dis(src_img, tgt_img).view(-1)
-            loss = loss_func(output, label)
-            loss.backward()
+            output_age_T = age_dis(src_img, src_age).view(-1)
+            loss_age_T = loss_func(output_age_T, label)
+            
             # train false images
             label.fill_(0)
-            output = id_dis(src_img, syn_img.detach()).view(-1)
-            loss = loss_func(output, label)
-            loss.backward()
+            # use detach() to fix G
+            output_age_F = age_dis(syn_img.detach(), syn_age).view(-1)
+            loss_age_F = loss_func(output_age_F, label)
+            
             # update weights
+            age_dis.zero_grad()
+            loss_age = (loss_age_T + loss_age_F) / 2
+            loss_age.backward()
+            optim_age_dis.step()
+
+            # ------------------------------------------------------------------
+            # train id D
+            # train true images
+            label.fill_(1)
+            output_id_T = id_dis(src_img, tgt_img).view(-1)
+            loss_id_T = loss_func(output_id_T, label)
+            
+            # train false images
+            label.fill_(0)
+            output_id_F = id_dis(src_img, syn_img.detach()).view(-1)
+            loss_id_F = loss_func(output_id_F, label)
+            
+            # update weights
+            id_dis.zero_grad()
+            loss_id = (loss_id_T + loss_id_F) / 2
+            loss_id.backward()
             optim_id_dis.step()
 
+            # ------------------------------------------------------------------
             # train G
-            gen.zero_grad()
             label.fill_(1)
-            # output = age_dis(syn_img, syn_age, batch_len).view(-1)
-            # loss_age = loss_func(output, label)
-            # loss_age.backward(retain_graph=True)
-            output = id_dis(syn_img, syn_img).view(-1)
-            loss_id = loss_func(output, label)
-            # loss = loss_age + loss_id
-            loss_id.backward()
-            optim_gen.step()
+            output_age_g = age_dis(syn_img, syn_age).view(-1)
+            loss_age_g = loss_func(output_age_g, label)
 
-            print(loss_id)
+            output_id_g = id_dis(syn_img, syn_img).view(-1)
+            loss_id_g = loss_func(output_id_g, label)
             
-            if not i % 10:
+            gen.zero_grad()
+            loss_g = (loss_age_g + loss_id_g) / 2
+            loss_g.backward()
+            optim_gen.step()
+            
+            if batch_len < opt.batch_size:  # last batch of each epoch
                 utils.save_image(syn_img, './%d_%d_img.jpg' % (epoch, i), normalize=True)
+                print('epoch: %d\nbatch: %d\nage_loss: %f\nid_loss: %f\ng_loss: %f\n'
+                      % (epoch, i, loss_age.data[0], loss_id.data[0], loss_g.data[0]))
 
         # break
 
     # torch.save(gen.state_dict(), 'g.pth')
 
 
+
+# loss_age.backward(retain_graph=True)
 # RuntimeError: Trying to backward through the graph a second time, but the
 # buffers have already been freed. Specify retain_graph=True when calling
 # backward the first time.
