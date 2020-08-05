@@ -54,7 +54,7 @@ class Gen(nn.Module):
         vector = self.encode(img)
         label = self.embed(label)
         vector = torch.cat((vector, label), 1)
-        output = self.decode_fc(vector)
+        output = self.decode_fc(vector).view(-1, 1024, 7, 7)
         output = self.decode_deconv(output)
         return output
 
