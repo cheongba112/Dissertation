@@ -10,23 +10,23 @@ class Gen(nn.Module):
         self.encode = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),
             # nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),  # 64 112 112
             nn.Conv2d(64, 128, 3, 1, 1),
             # nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),  # 128 56 56
             nn.Conv2d(128, 256, 3, 1, 1),
             # nn.BatchNorm2d(256),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),  # 256 28 28
             nn.Conv2d(256, 512, 3, 1, 1),
             # nn.BatchNorm2d(512),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),  # 512 14 14
             nn.Conv2d(512, 512, 3, 1, 1),
             # nn.BatchNorm2d(512),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),  # 512 7 7
             nn.Flatten(),
             nn.Linear(512 * 7 * 7, 100),  # z
@@ -35,17 +35,17 @@ class Gen(nn.Module):
         self.embed.weight.data = torch.eye(100)  # one-hot encoding
         self.decode_fc = nn.Sequential(
             nn.Linear(200, 7 * 7 * 1024),
-            nn.ReLU(),
+            nn.ReLU(True),
         )
         self.decode_deconv = nn.Sequential(
             nn.ConvTranspose2d(1024, 512, 4, 2, 1),  # 512 14 14
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(512, 256, 4, 2, 1),   # 256 28 28
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(256, 128, 4, 2, 1),   # 128 56 56
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(128, 64, 4, 2, 1),    # 64 112 112
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(64, 3, 3, 1, 1),      # 3 224 224
             nn.Tanh(),
         )
@@ -66,13 +66,13 @@ class AgeD(nn.Module):
         self.embed.weight.data = torch.eye(100)
         self.fc = nn.Sequential(
             nn.Linear(1100, 1024),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(1024, 512),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(512, 256),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(256, 128),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(128, 1),
             nn.Sigmoid(),
         )
@@ -90,13 +90,13 @@ class IdD(nn.Module):
         self.encode = resnet34()
         self.fc = nn.Sequential(
             nn.Linear(2000, 1024),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(1024, 512),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(512, 256),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(256, 128),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(128, 1),
             nn.Sigmoid(),
         )
@@ -124,36 +124,36 @@ class Gen(nn.Module):
         self.encode = nn.Sequential(
             nn.Conv2d(3, 64, 3, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),  # [1, 64, 7, 7]
         )
         self.decode = nn.Sequential(
             nn.ConvTranspose2d(65, 64, 3, stride=2),  # 15
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(64, 64, 3, stride=2),  # 31
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(64, 64, 2, stride=2),  # 62
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(64, 64, 3, stride=2),  # 125
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.ConvTranspose2d(64, 3, 2, stride=2),   # 250
-            nn.ReLU(),
+            nn.ReLU(True),
         )
 
     def forward(self, x, con, batch_size):
@@ -169,29 +169,29 @@ class Age_Dis(nn.Module):
         self.embed = nn.Embedding(80, 49)
         self.encode = nn.Sequential(
             nn.Conv2d(3, 64, 3, padding=1),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 64, 3, padding=1),
-            nn.ReLU(inplace=),
+            nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
         )
         self.regre = nn.Sequential(
             nn.Conv2d(65, 64, 3),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Flatten(),
             nn.Linear(64 * 5 * 5, 1024),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(1024, 1024),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(1024, 1),
             nn.Sigmoid(),
         )
@@ -211,25 +211,25 @@ class Id_Dis(nn.Module):
         self.model = nn.Sequential(
             nn.Conv2d(6, 64, 3),    # 248
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),        # 124
             nn.Conv2d(64, 64, 3),   # 122
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),        # 61
             nn.Conv2d(64, 64, 3),   # 59
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(2),        # 29
             nn.Conv2d(64, 64, 3),   # 27
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.MaxPool2d(3),        # 9
             nn.Flatten(),
             nn.Linear(64 * 9 * 9, 1024),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(1024, 512),
-            nn.ReLU(),
+            nn.ReLU(True),
             nn.Linear(512, 1),
             nn.Sigmoid(),
         )

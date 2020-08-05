@@ -113,6 +113,14 @@ if __name__ == '__main__':
 
     # torch.save(gen.state_dict(), 'g.pth')
 
+'''
+line72
+RuntimeError: one of the variables needed for gradient computation has been 
+modified by an inplace operation: [torch.cuda.FloatTensor [32]] is at version 
+3; expected version 2 instead. Hint: enable anomaly detection to find the 
+operation that failed to compute its gradient, with 
+torch.autograd.set_detect_anomaly(True).
+'''
 
 
 # loss_age.backward(retain_graph=True)
