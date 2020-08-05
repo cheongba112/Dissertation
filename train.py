@@ -105,7 +105,7 @@ if __name__ == '__main__':
             optim_gen.step()
             
             if batch_len < opt.batch_size:  # last batch of each epoch
-                utils.save_image(syn_img, './%d_%d_img.jpg' % (epoch, i), normalize=True)
+                utils.save_image(syn_img, './pics/%d_%d.jpg' % (epoch, i), normalize=True)
                 print('epoch: %d\nbatch: %d\nage_loss: %f\nid_loss: %f\ng_loss: %f\n'
                       % (epoch, i, loss_age.data[0], loss_id.data[0], loss_g.data[0]))
 
