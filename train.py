@@ -68,7 +68,7 @@ if __name__ == '__main__':
             
             # update weights
             age_dis.zero_grad()
-            loss_age = (loss_age_T + loss_age_F) / 2
+            loss_age = loss_age_T + loss_age_F
             loss_age.backward()
             optim_age_dis.step()
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             
             # update weights
             id_dis.zero_grad()
-            loss_id = (loss_id_T + loss_id_F) / 2
+            loss_id = loss_id_T + loss_id_F
             loss_id.backward()
             optim_id_dis.step()
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
             loss_id_g = loss_func(output_id_g, label)
             
             gen.zero_grad()
-            loss_g = (loss_age_g + loss_id_g) / 2
+            loss_g = loss_age_g + loss_id_g
             loss_g.backward()
             optim_gen.step()
             
