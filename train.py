@@ -1,4 +1,4 @@
-import os, random, csv
+import os, random, csv, time
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -41,6 +41,8 @@ optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 
 # -----------------training----------------
 if __name__ == '__main__':
+    start = time.time()
+
     for epoch in range(opt.epoch_num):
         print('Epoch: %d' % (epoch))
         
@@ -82,7 +84,9 @@ if __name__ == '__main__':
             # loss_age = loss_age_T + loss_age_F
             # loss_age_F.backward()
             optim_age_dis.step()
+
             print('train age D ends')
+            print(time.time() - start)
 
             # ------------------------------------------------------------------
             # train id D
@@ -104,7 +108,9 @@ if __name__ == '__main__':
             # loss_id = loss_id_T + loss_id_F
             # loss_id.backward()
             optim_id_dis.step()
+
             print('train id D ends')
+            print(time.time() - start)
 
             # ------------------------------------------------------------------
             # train G
@@ -122,8 +128,11 @@ if __name__ == '__main__':
             loss_g = 0.1 * loss_age_g + 0.1 * loss_id_g + loss_l1
             loss_g.backward()
             optim_gen.step()
+
             print('train G ends')
+            print(time.time() - start)
             
+            # ------------------------------------------------------------------
             if batch_len < opt.batch_size:  # last batch of each epoch
                 utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
                 with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
