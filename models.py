@@ -46,7 +46,7 @@ class Gen(nn.Module):
             nn.ReLU(True),
             nn.ConvTranspose2d(128, 64, 4, 2, 1),    # 64 112 112
             nn.ReLU(True),
-            nn.ConvTranspose2d(64, 3, 3, 1, 1),      # 3 224 224
+            nn.ConvTranspose2d(64, 3, 4, 2, 1),      # 3 224 224
             nn.Tanh(),
         )
 

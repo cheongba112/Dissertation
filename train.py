@@ -1,4 +1,4 @@
-import os, random
+import os, random, csv
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -10,6 +10,10 @@ from torchvision import utils
 from models import *
 from get_dataset import get_dataset
 from options import opt
+
+# tensor 2 list
+def tl(tensor):
+    return str(tensor.numpy().tolist())
 
 # dataset
 dataset = get_dataset(opt.dataroot)
@@ -55,39 +59,45 @@ if __name__ == '__main__':
 
             # ------------------------------------------------------------------
             # train age D
-            # train true images
-            label.fill_(1)
-            output_age_T = age_dis(src_img, src_age).view(-1)
-            loss_age_T = loss_func(output_age_T, label)
+            age_dis.zero_grad()
             
             # train false images
             label.fill_(0)
             # use detach() to fix G
             output_age_F = age_dis(syn_img.detach(), syn_age).view(-1)
-            loss_age_F = loss_func(output_age_F, label)
+            loss_age_F = nn.BCELoss()(output_age_F, label)
+            loss_age_F.backward()
+            
+            # train true images
+            label.fill_(1)
+            output_age_T = age_dis(src_img, src_age).view(-1)
+            loss_age_T = nn.BCELoss()(output_age_T, label)
+            loss_age_T.backward()
             
             # update weights
-            age_dis.zero_grad()
-            loss_age = loss_age_T + loss_age_F
-            loss_age.backward()
+            # loss_age = loss_age_T + loss_age_F
+            # loss_age_F.backward()
             optim_age_dis.step()
 
             # ------------------------------------------------------------------
             # train id D
+            id_dis.zero_grad()
+            
             # train true images
             label.fill_(1)
             output_id_T = id_dis(src_img, tgt_img).view(-1)
             loss_id_T = loss_func(output_id_T, label)
+            loss_id_T.backward()
             
             # train false images
             label.fill_(0)
             output_id_F = id_dis(src_img, syn_img.detach()).view(-1)
             loss_id_F = loss_func(output_id_F, label)
+            loss_id_F.backward()
             
             # update weights
-            id_dis.zero_grad()
-            loss_id = loss_id_T + loss_id_F
-            loss_id.backward()
+            # loss_id = loss_id_T + loss_id_F
+            # loss_id.backward()
             optim_id_dis.step()
 
             # ------------------------------------------------------------------
@@ -100,18 +110,32 @@ if __name__ == '__main__':
             loss_id_g = loss_func(output_id_g, label)
             
             gen.zero_grad()
-            loss_g = loss_age_g + loss_id_g
+            l1_func = nn.L1Loss()
+            loss_l1 = l1_func(src_img, syn_img)
+
+            loss_g = 0.1 * loss_age_g + 0.1 * loss_id_g + loss_l1
             loss_g.backward()
             optim_gen.step()
             
             if batch_len < opt.batch_size:  # last batch of each epoch
                 utils.save_image(syn_img, './pics/%d_%d.jpg' % (epoch, i), normalize=True)
-                print('epoch: %d\nbatch: %d\nage_loss: %f\nid_loss: %f\ng_loss: %f\n'
-                      % (epoch, i, loss_age.data[0], loss_id.data[0], loss_g.data[0]))
+                with open('train_result.csv', 'a', encoding='utf-8', newline='') as F:
+                    writer = csv.writer(F)
+                    writer.writerow([epoch, i, 
+                        tl(loss_age_T), 
+                        tl(loss_age_F), 
+                        tl(loss_id_T), 
+                        tl(loss_id_F), 
+                        tl(loss_g), 
+                        tl(syn_age)])
 
-        # break
+    torch.save(gen.state_dict(),     'g.pth')
+    torch.save(age_dis.state_dict(), 'aged.pth')
+    torch.save(id_dis.state_dict(),  'idd.pth')
 
-    # torch.save(gen.state_dict(), 'g.pth')
+# 200805
+# loss function is too 'easy' for Ds and too 'difficult' for G
+# need to add and L1 loss and give 0.01 weight before loss_Ds_for_G
 
 '''
 line72
@@ -121,7 +145,6 @@ modified by an inplace operation: [torch.cuda.FloatTensor [32]] is at version
 operation that failed to compute its gradient, with 
 torch.autograd.set_detect_anomaly(True).
 '''
-
 
 # loss_age.backward(retain_graph=True)
 # RuntimeError: Trying to backward through the graph a second time, but the
