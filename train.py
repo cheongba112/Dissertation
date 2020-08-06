@@ -85,8 +85,8 @@ if __name__ == '__main__':
             # loss_age_F.backward()
             optim_age_dis.step()
 
-            print('train age D ends')
-            print(time.time() - start)
+            # print('train age D ends')
+            # print(time.time() - start)
 
             # ------------------------------------------------------------------
             # train id D
@@ -109,8 +109,8 @@ if __name__ == '__main__':
             # loss_id.backward()
             optim_id_dis.step()
 
-            print('train id D ends')
-            print(time.time() - start)
+            # print('train id D ends')
+            # print(time.time() - start)
 
             # ------------------------------------------------------------------
             # train G
@@ -129,8 +129,8 @@ if __name__ == '__main__':
             loss_g.backward()
             optim_gen.step()
 
-            print('train G ends')
-            print(time.time() - start)
+            # print('train G ends')
+            # print(time.time() - start)
             
             # ------------------------------------------------------------------
             if batch_len < opt.batch_size:  # last batch of each epoch
