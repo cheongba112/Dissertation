@@ -42,7 +42,11 @@ optim_id_dis  = optim.Adam(id_dis.parameters(),  lr=0.0002, betas=(0.5, 0.999))
 # -----------------training----------------
 if __name__ == '__main__':
     for epoch in range(opt.epoch_num):
+        print('Epoch: %d' % (epoch))
+        
         for i, (src_img, src_age, tgt_img) in enumerate(dataloader):
+            print('Batch: %d' % (i))
+
             # put batch into device
             src_img = src_img.to(device)
             tgt_img = tgt_img.to(device)
@@ -78,6 +82,7 @@ if __name__ == '__main__':
             # loss_age = loss_age_T + loss_age_F
             # loss_age_F.backward()
             optim_age_dis.step()
+            print('train age D ends')
 
             # ------------------------------------------------------------------
             # train id D
@@ -99,6 +104,7 @@ if __name__ == '__main__':
             # loss_id = loss_id_T + loss_id_F
             # loss_id.backward()
             optim_id_dis.step()
+            print('train id D ends')
 
             # ------------------------------------------------------------------
             # train G
@@ -116,10 +122,11 @@ if __name__ == '__main__':
             loss_g = 0.1 * loss_age_g + 0.1 * loss_id_g + loss_l1
             loss_g.backward()
             optim_gen.step()
+            print('train G ends')
             
             if batch_len < opt.batch_size:  # last batch of each epoch
-                utils.save_image(syn_img, './pics/%d_%d.jpg' % (epoch, i), normalize=True)
-                with open('train_result.csv', 'a', encoding='utf-8', newline='') as F:
+                utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
+                with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
                     writer = csv.writer(F)
                     writer.writerow([epoch, i, 
                         tl(loss_age_T), 
@@ -129,9 +136,9 @@ if __name__ == '__main__':
                         tl(loss_g), 
                         tl(syn_age)])
 
-    torch.save(gen.state_dict(),     'g.pth')
-    torch.save(age_dis.state_dict(), 'aged.pth')
-    torch.save(id_dis.state_dict(),  'idd.pth')
+    torch.save(gen.state_dict(),     './train_result/g.pth')
+    torch.save(age_dis.state_dict(), './train_result/age_d.pth')
+    torch.save(id_dis.state_dict(),  './train_result/id_d.pth')
 
 # 200805
 # loss function is too 'easy' for Ds and too 'difficult' for G
