@@ -7,10 +7,10 @@
 import os
 from download_gdrive import *
 
-file_id = '1NyxrzJbHgDOpf-nRJhfxsHqWNDW_D1TV'
-chpt_path = './datasets/'
+file_id = '19kn0_JJ0iUQ7SDY9GgIcJdJM7QFaKJtH'
+chpt_path = '../'
 if not os.path.isdir(chpt_path):
 	os.makedirs(chpt_path)
-destination = os.path.join(chpt_path, 'datasets.zip')
+destination = os.path.join(chpt_path, 'CACD2000.tar')
 download_file_from_google_drive(file_id, destination) 
 unzip_file(destination, chpt_path)
