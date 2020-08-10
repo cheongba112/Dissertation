@@ -65,7 +65,7 @@ if __name__ == '__main__':
             src_age = src_age.to(device)
             syn_age = torch.tensor(np.random.randint(10, 71, src_age.size()),
                                    dtype=torch.int64).to(device)
-            pri_vec = torch.FloatTensor((opt.batch_len, 100)).uniform_(-1, 1).to(device)
+            pri_vec = torch.FloatTensor((batch_len, 100)).uniform_(-1, 1).to(device)
             real_label  = torch.full(src_age.size(), 1, device=device)
             false_label = torch.full(src_age.size(), 0, device=device)
 
