@@ -26,7 +26,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # model
 netE    = Encoder().to(device)
-netG    = Decoder().to(device)
+netG    = Generator().to(device)
 netageR = AgeRegressor().to(device)
 netimgD = ImageDiscriminator().to(device)
 netvecD = VectorDiscriminator().to(device)
