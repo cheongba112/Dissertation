@@ -47,9 +47,9 @@ optimvecD = optim.Adam(netvecD.parameters(), lr=0.0002, betas=(0.5, 0.999))
 # training
 if __name__ == '__main__':
     # start = time.time()
-    # with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
-    #     w = csv.writer(F)
-    #     w.writerow(['epoch', 'batch', 'loss_ageR', 'loss_vecD', 'loss_imgD', 'loss_G', 'syn_age'])
+    with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
+        w = csv.writer(F)
+        w.writerow(['epoch', 'batch', 'loss_ageR', 'loss_vecD', 'loss_imgD', 'loss_G', 'syn_age'])
 
     for epoch in range(opt.epoch_num):
         print('Epoch: %d' % (epoch))
@@ -126,7 +126,7 @@ if __name__ == '__main__':
             optimG.step()
 
             # print(time.time() - start)
-            print(epoch, i, tl(loss_ageR), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age))
+            # print(epoch, i, tl(loss_ageR), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age))
 
             # ------------------------------------------------------------------
             if not i % 100:
