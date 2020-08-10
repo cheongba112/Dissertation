@@ -63,10 +63,10 @@ class Generator(nn.Module):  # 100 + 100 -> 3 * 224 * 224
         return output
 
 
-class AgeDiscriminator(nn.Module):  # 3 * 224 * 224 -> 1(age)
+class AgeRegressor(nn.Module):  # 3 * 224 * 224 -> 1(age)
     def __init__(self):
-        super(AgeDiscriminator, self).__init__()
-        self.encode = nn.Sequential(
+        super(AgeRegressor, self).__init__()
+        self.model = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),
             # nn.BatchNorm2d(64),
             nn.ReLU(True),
@@ -90,25 +90,11 @@ class AgeDiscriminator(nn.Module):  # 3 * 224 * 224 -> 1(age)
             nn.Flatten(),
             nn.Linear(512 * 7 * 7, 1024),
             nn.ReLU(True),
-            nn.Linear(1024, 100),
-        )
-        self.embed = nn.Embedding(100, 100)
-        self.embed.weight.data = torch.eye(100)
-        self.fc = nn.Sequential(
-            nn.Linear(200, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 100),
-            nn.ReLU(True),
-            nn.Linear(100, 1),
-            nn.Sigmoid(),
+            nn.Linear(1024, 1),
         )
 
-    def forward(self, img, age):
-        vec = self.encode(img)
-        age = self.embed(age)
-        vec = torch.cat((vec, age), 1)
-        output = self.fc(vec)
-        return output
+    def forward(self, img):
+        return self.model(img)
 
 
 class ImageDiscriminator(nn.Module):  # 3 * 224 * 224 -> 1(real or not)
@@ -164,9 +150,9 @@ class VectorDiscriminator(nn.Module):  # 100 -> 1
         return self.model(vector)
 
 
-class AgeRegressor(nn.Module):
+class FinalAgeRegressor(nn.Module):
     def __init__(self):
-        super(AgeRegressor, self).__init__()
+        super(FinalAgeRegressor, self).__init__()
         self.model = nn.Sequential()
 
     def forward(self, x):

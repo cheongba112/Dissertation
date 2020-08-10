@@ -3,13 +3,6 @@ import torch.nn as nn
 
 from torchvision.models import vgg19, resnet34
 
-'''
-G:    conv encode -> age embed -> cat -> fc 1024 -> deconv decode
-ageD: res34 encode -> age embed -> cat -> fc 1
-idD:  res34 encode * 2 -> cat -> fc 1
-regression: none
-'''
-
 
 class Gen(nn.Module):
     def __init__(self):

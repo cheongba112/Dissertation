@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 from torchvision import utils
 
-from models.models_old_1 import *
+from models_old_1 import *
 from get_dataset import get_dataset
 from options import opt
 
