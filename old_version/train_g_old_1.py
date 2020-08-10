@@ -56,6 +56,8 @@ if __name__ == '__main__':
             syn_age = torch.tensor(np.random.randint(10, 71, src_age.size()),
                                    dtype=torch.int64).to(device)
             label = torch.full(src_age.size(), 1, device=device)
+            
+            # print(syn_age.size())
 
             # get batch length
             batch_len = src_age.size()[0]
@@ -87,7 +89,7 @@ if __name__ == '__main__':
 
             # print('train age D ends')
             # print(time.time() - start)
-
+            
             # ------------------------------------------------------------------
             # train id D
             id_dis.zero_grad()
@@ -132,6 +134,8 @@ if __name__ == '__main__':
             # print('train G ends')
             # print(time.time() - start)
             
+            # break
+
             # ------------------------------------------------------------------
             if batch_len < opt.batch_size:  # last batch of each epoch
                 utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
@@ -144,7 +148,9 @@ if __name__ == '__main__':
                         tl(loss_id_F), 
                         tl(loss_g), 
                         tl(syn_age)])
-
+        
+        # break
+        
     torch.save(gen.state_dict(),     './train_result/g.pth')
     torch.save(age_dis.state_dict(), './train_result/age_d.pth')
     torch.save(id_dis.state_dict(),  './train_result/id_d.pth')

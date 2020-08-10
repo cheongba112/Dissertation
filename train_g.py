@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 from torchvision import utils
 
-from models.models import *
+from models import *
 from get_dataset import get_dataset
 from options import opt
 
@@ -15,6 +15,7 @@ def tl(tensor):
     return str(tensor.tolist())
 
 # dataset
+# opt.dataroot = './cacd_lite'  # local debug option
 dataset = get_dataset(opt.dataroot)
 
 # dataloader
@@ -65,9 +66,9 @@ if __name__ == '__main__':
             src_age = src_age.to(device)
             syn_age = torch.tensor(np.random.randint(10, 71, src_age.size()),
                                    dtype=torch.int64).to(device)
-            pri_vec = torch.FloatTensor((batch_len, 100)).uniform_(-1, 1).to(device)
-            real_label  = torch.full(src_age.size(), 1, device=device)
-            false_label = torch.full(src_age.size(), 0, device=device)
+            pri_vec = torch.FloatTensor(batch_len, 100).uniform_(-1, 1).to(device)
+            real_label  = torch.full(src_age.size(), 1, device=device)  # warning
+            false_label = torch.full(src_age.size(), 0, device=device)  # warning
 
             # generate synthesized images
             syn_vec = netE(src_img)
@@ -76,16 +77,16 @@ if __name__ == '__main__':
             # ------------------------------------------------------------------
             # train age regressor
             netageR.zero_grad()
-            output_ageR = netageR(syn_img.detach())
-            loss_ageR = MSE(output_ageR, src_age)
+            output_ageR = netageR(syn_img.detach()).view(-1)
+            loss_ageR = L1(output_ageR, src_age)  # MSELoss gets an error here
             loss_ageR.backward()
             optimageR.step()
 
             # ------------------------------------------------------------------
             # train vector D
             netvecD.zero_grad()
-            output_vec_T = netvecD(pri_vec)
-            output_vec_F = netvecD(syn_vec.detach())
+            output_vec_T = netvecD(pri_vec).view(-1)
+            output_vec_F = netvecD(syn_vec.detach()).view(-1)
             loss_vecD = BCE(output_vec_T, real_label) + BCE(output_vec_F, false_label)
             loss_vecD.backward()
             optimvecD.step()
@@ -93,8 +94,8 @@ if __name__ == '__main__':
             # ------------------------------------------------------------------
             # train image D
             netimgD.zero_grad()
-            output_img_T = netimgD(src_img)  # netimgD(ref_img)
-            output_img_F = netimgD(syn_img.detach())
+            output_img_T = netimgD(src_img).view(-1)  # netimgD(ref_img).view(-1)
+            output_img_F = netimgD(syn_img.detach()).view(-1)
             loss_imgD = BCE(output_img_T, real_label) + BCE(output_img_F, false_label)
             loss_imgD.backward()
             optimimgD.step()
@@ -108,18 +109,18 @@ if __name__ == '__main__':
             loss_l1_G = L1(syn_img, ref_img)  # L1(syn_img, src_img)
 
             # age regressor loss
-            output_ageR_G = netageR(syn_img)
-            loss_ageR_G = MSE(output_ageR_G, syn_age)
+            output_ageR_G = netageR(syn_img).view(-1)
+            loss_ageR_G = L1(output_ageR_G, syn_age)  # MSELoss gets an error here
 
             # image D loss
-            output_imgD_G = netimgD(syn_img)
+            output_imgD_G = netimgD(syn_img).view(-1)
             loss_imgD_G = BCE(output_imgD_G, real_label)
 
             # vector D loss
-            output_vecD_G = netvecD(syn_vec)
+            output_vecD_G = netvecD(syn_vec).view(-1)
             loss_vecD_G = BCE(output_vecD_G, real_label)
 
-            loss_G = loss_imgD_G + 0.01 * loss_l1_G + 0.01 * loss_vecD_G + 0.01 * loss_ageR
+            loss_G = loss_imgD_G + 0.01 * loss_l1_G + 0.01 * loss_vecD_G + 0.01 * loss_ageR_G
             loss_G.backward()
             optimE.step()
             optimG.step()
@@ -128,22 +129,22 @@ if __name__ == '__main__':
             print(epoch, i, tl(loss_ageR), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age))
 
             # ------------------------------------------------------------------
-            # if not i % 100:
-            #     utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
-            #     with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
-            #         writer = csv.writer(F)
-            #         writer.writerow([epoch, i, 
-            #             tl(loss_ageR), 
-            #             tl(loss_vecD), 
-            #             tl(loss_imgD), 
-            #             tl(loss_G), 
-            #             tl(syn_age)])
+            if not i % 100:
+                utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
+                with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
+                    writer = csv.writer(F)
+                    writer.writerow([epoch, i, 
+                        tl(loss_ageR), 
+                        tl(loss_vecD), 
+                        tl(loss_imgD), 
+                        tl(loss_G), 
+                        tl(syn_age)])
 
-            break
-        break
+        #     break
+        # break
 
-    # torch.save(netE.state_dict(),    './train_result/netE.pth')
-    # torch.save(netG.state_dict(),    './train_result/netG.pth')
-    # torch.save(netageR.state_dict(), './train_result/netageR.pth')
-    # torch.save(netimgD.state_dict(), './train_result/netimgD.pth')
-    # torch.save(netvecD.state_dict(), './train_result/netvecD.pth')
+    torch.save(netE.state_dict(),    './train_result/netE.pth')
+    torch.save(netG.state_dict(),    './train_result/netG.pth')
+    torch.save(netageR.state_dict(), './train_result/netageR.pth')
+    torch.save(netimgD.state_dict(), './train_result/netimgD.pth')
+    torch.save(netvecD.state_dict(), './train_result/netvecD.pth')
