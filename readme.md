@@ -1,13 +1,19 @@
-# 数据集要求
-- 多人物、多年龄
-- 每个人物至少两张图片
-- 每个图片带有年龄标签
+# Requirement of Dataset
+- contains of multiple identity and age labels
+- each identity has at least two images
+- each image has its age label
   
-# 数据导入逻辑
+# Data Importing Logic
 ### get_dataset.py
-首先函数将文件夹中文件名使用dict（其实就是hashmap）进行存储，提取出age标签  
-再根据dict将两个文件名和一个age label存入list  
-Dataset类中的getitem函数不再加载图片，留到training或test中加载，减少Dataset内存  
+Firstly, use function to extract each file name and age label of all images in the folder, storing with dictionary(as a hashmap)  
+Then append file_name_a, age_label_a, file_name_b into a list according to the dictionary, where file_b has the same identity with file_a  
+The get_dataset class open and preprocess file_a and file_b, and turn age_label_a into integer  
+loading CACD2000 dataset cost about 3 sec  
+  
+# Training and Testing Steps
+- general cGAN training
+- regressor training with pre-trained generator(fixed)
+- testing with pre-trained generator and regressor
   
 
 
