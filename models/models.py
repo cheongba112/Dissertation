@@ -75,7 +75,7 @@ class Generator(nn.Module):  # 100 + 100 -> 3 * 224 * 224
 
 class AgeRegressor(nn.Module):  # 3 * 224 * 224 -> 1(age)
     def __init__(self):
-        super(AgeClassifier, self).__init__()
+        super(AgeRegressor, self).__init__()
         self.model = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),
             # nn.BatchNorm2d(64),
