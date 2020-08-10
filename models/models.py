@@ -109,7 +109,7 @@ class AgeRegressor(nn.Module):  # 3 * 224 * 224 -> 1(age)
 
 class ImageDiscriminator(nn.Module):  # 3 * 224 * 224 -> 1(real or not)
     def __init__(self):
-        super(Discriminator, self).__init__()
+        super(ImageDiscriminator, self).__init__()
         self.model = nn.Sequential(
             nn.Conv2d(3, 64, 3, 1, 1),
             # nn.BatchNorm2d(64),
