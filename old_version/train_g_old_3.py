@@ -14,10 +14,19 @@ from torchvision import utils
 from models import *
 from get_dataset import get_dataset
 from options import opt
-from utils import *
+
+# tensor to list
+def tl(tensor):
+    return str(tensor.tolist())
+
+# weights initialise function
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1 or classname.find('Linear') != -1:
+        m.weight.data.normal_(0.0, 0.02)
 
 # dataset
-# opt.dataroot = './cacd_lite'  # local debug option
+opt.dataroot = './cacd_lite'  # local debug option
 dataset = get_dataset(opt.dataroot)
 
 # dataloader
@@ -30,14 +39,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # model
 netE    = Encoder().to(device)
 netG    = Generator().to(device)
-netageR = AgeRegressor().to(device)
+netageD = AgeDiscriminator().to(device)
 netimgD = ImageDiscriminator().to(device)
 netvecD = VectorDiscriminator().to(device)
 
 # model weights initialise
 netE.apply(weights_init)
 netG.apply(weights_init)
-netageR.apply(weights_init)
+netageD.apply(weights_init)
 netimgD.apply(weights_init)
 netvecD.apply(weights_init)
 
@@ -49,16 +58,16 @@ MSE = nn.MSELoss().to(device)
 # optimizer
 optimE    = optim.Adam(netE.parameters(),    lr=0.0002, betas=(0.5, 0.999))
 optimG    = optim.Adam(netG.parameters(),    lr=0.0002, betas=(0.5, 0.999))
-optimageR = optim.Adam(netageR.parameters(), lr=0.0002, betas=(0.5, 0.999))
+optimageD = optim.Adam(netageD.parameters(), lr=0.0002, betas=(0.5, 0.999))
 optimimgD = optim.Adam(netimgD.parameters(), lr=0.0002, betas=(0.5, 0.999))
 optimvecD = optim.Adam(netvecD.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
 # training
 if __name__ == '__main__':
     # start = time.time()
-    with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
-        w = csv.writer(F)
-        w.writerow(['epoch', 'batch', 'loss_ageR', 'loss_vecD', 'loss_imgD', 'loss_G', 'syn_age'])
+    # with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
+    #     w = csv.writer(F)
+    #     w.writerow(['epoch', 'batch', 'loss_ageD', 'loss_vecD', 'loss_imgD', 'loss_G', 'syn_age'])
 
     for epoch in range(opt.epoch_num):
         print('Epoch: %d' % (epoch))
@@ -66,35 +75,27 @@ if __name__ == '__main__':
         for i, (src_img, src_age, ref_img) in enumerate(dataloader):
             print('Batch: %d' % (i))
 
-            # prepare batch data
-            src_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
-            for i, age in enumerate(src_age):
-                src_age_onehot[i][age - 1] = 1.  # 0th pos -> 1 year old
-
-            syn_age = torch.tensor(np.random.randint(10, 71))  # 10 - 70 years old
-            syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
-            for i in range(src_age.size()[0]):
-                syn_age_onehot[i][syn_age - 1] = 1.
-
+            # put batch into device
             src_img = src_img.to(device)
             # ref_img = ref_img.to(device)
-
-            pri_vec = torch.FloatTensor(src_age.size()[0], 50).uniform_(-1, 1).to(device)
-            
+            src_age = src_age.to(device)
+            syn_age = torch.LongTensor(src_age.size()).fill_(np.random.randint(10, 71)).to(device)
+            pri_vec = torch.FloatTensor(src_age.size()[0], 100).uniform_(-1, 1).to(device)
             real_label  = torch.full(src_age.size(), 1, device=device)  # warning
             false_label = torch.full(src_age.size(), 0, device=device)  # warning
 
             # generate synthesized images
             syn_vec = netE(src_img)
-            syn_img = netG(syn_vec, syn_age_onehot)
+            syn_img = netG(syn_vec, syn_age)
 
             # ------------------------------------------------------------------
-            # train age Regressor
-            netageR.zero_grad()
-            output_age = netageR(src_img).view(-1)
-            loss_ageR = MSE(output_age.float(), src_age.float())
-            loss_ageR.backward()
-            optimageR.step()
+            # train age D
+            netageD.zero_grad()
+            output_age_T = netageD(src_img, src_age).view(-1)
+            output_age_F = netageD(syn_img.detach(), syn_age).view(-1)
+            loss_ageD = BCE(output_age_T, real_label) + BCE(output_age_F, false_label)
+            loss_ageD.backward()
+            optimageD.step()
 
             # ------------------------------------------------------------------
             # train image D
@@ -122,9 +123,9 @@ if __name__ == '__main__':
             # L1 loss
             loss_l1_G = L1(syn_img, src_img)
 
-            # age R loss
-            output_age_G = netageR(syn_img).view(-1)
-            loss_age_G = MSE(output_age_G.float(), syn_age.repeat(src_age.size()).float())
+            # age D loss
+            output_age_G = netageD(syn_img, syn_age).view(-1)
+            loss_age_G = BCE(output_age_G, real_label)
 
             # image D loss
             output_img_G = netimgD(syn_img).view(-1)
@@ -134,17 +135,14 @@ if __name__ == '__main__':
             output_vec_G = netvecD(syn_vec).view(-1)
             loss_vec_G = BCE(output_vec_G, real_label)
 
-            # tv loss
-            loss_tv_G = TV_Loss(syn_img)
-
-            loss_G = loss_l1_G + 0.0001 * loss_age_G + 0.0001 * loss_img_G + 0.01 * loss_vec_G + loss_tv_G
+            loss_G = loss_l1_G + 0.0001 * loss_age_G + loss_img_G + 0.01 * loss_vec_G
             loss_G.backward()
 
             optimE.step()
             optimG.step()
 
-            print(time.time() - start)
-            print(epoch, i, tl(loss_ageR), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age))
+            # print(time.time() - start)
+            # print(epoch, i, tl(loss_ageD), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age[0]))
 
             # ------------------------------------------------------------------
             if not i % 100:
@@ -152,17 +150,17 @@ if __name__ == '__main__':
                 with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
                     writer = csv.writer(F)
                     writer.writerow([epoch, i, 
-                        tl(loss_ageR), 
+                        tl(loss_ageD), 
                         tl(loss_vecD), 
                         tl(loss_imgD), 
                         tl(loss_G), 
                         tl(syn_age[0])])
-            
-        #     break
-        # break
+
+            break
+        break
 
     torch.save(netE.state_dict(),    './train_result/netE.pth')
     torch.save(netG.state_dict(),    './train_result/netG.pth')
-    torch.save(netageR.state_dict(), './train_result/netageR.pth')
+    torch.save(netageD.state_dict(), './train_result/netageD.pth')
     torch.save(netimgD.state_dict(), './train_result/netimgD.pth')
     torch.save(netvecD.state_dict(), './train_result/netvecD.pth')
