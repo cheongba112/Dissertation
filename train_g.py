@@ -1,8 +1,3 @@
-'''
-ageR -> ageD
-cancel ref_img
-same syn_age in each batch
-'''
 import os, random, csv, time
 import numpy as np
 
@@ -14,7 +9,7 @@ from torchvision import utils
 from models import *
 from get_dataset import get_dataset
 from options import opt
-from utils import *
+from misc import *
 
 # dataset
 # opt.dataroot = './cacd_lite'  # local debug option
@@ -65,24 +60,25 @@ if __name__ == '__main__':
         
         for i, (src_img, src_age, ref_img) in enumerate(dataloader):
             print('Batch: %d' % (i))
-
+            
             # prepare batch data
-            src_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
-            for i, age in enumerate(src_age):
-                src_age_onehot[i][age - 1] = 1.  # 0th pos -> 1 year old
-
-            syn_age = torch.tensor(np.random.randint(10, 71))  # 10 - 70 years old
-            syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
-            for i in range(src_age.size()[0]):
-                syn_age_onehot[i][syn_age - 1] = 1.
-
+            src_age = src_age.to(device)
             src_img = src_img.to(device)
             # ref_img = ref_img.to(device)
-
+            
             pri_vec = torch.FloatTensor(src_age.size()[0], 50).uniform_(-1, 1).to(device)
             
             real_label  = torch.full(src_age.size(), 1, device=device)  # warning
             false_label = torch.full(src_age.size(), 0, device=device)  # warning
+            
+            src_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
+            for i, age in enumerate(src_age):
+                src_age_onehot[i][age - 1] = 1.  # 0th pos -> 1 year old
+
+            syn_age = torch.LongTensor(src_age.size()).fill_(np.random.randint(10, 71)).to(device)  # 10 - 70 years old
+            syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
+            for i, age in enumerate(syn_age):
+                syn_age_onehot[i][age - 1] = 1.
 
             # generate synthesized images
             syn_vec = netE(src_img)
@@ -124,7 +120,7 @@ if __name__ == '__main__':
 
             # age R loss
             output_age_G = netageR(syn_img).view(-1)
-            loss_age_G = MSE(output_age_G.float(), syn_age.repeat(src_age.size()).float())
+            loss_age_G = MSE(output_age_G.float(), syn_age.float())
 
             # image D loss
             output_img_G = netimgD(syn_img).view(-1)
@@ -143,8 +139,8 @@ if __name__ == '__main__':
             optimE.step()
             optimG.step()
 
-            print(time.time() - start)
-            print(epoch, i, tl(loss_ageR), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age))
+            # print(time.time() - start)
+            # print(epoch, i, tl(loss_ageR), tl(loss_vecD), tl(loss_imgD), tl(loss_G), tl(syn_age[0]))
 
             # ------------------------------------------------------------------
             if not i % 100:
