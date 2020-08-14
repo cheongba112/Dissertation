@@ -11,6 +11,19 @@ from models import *
 from get_dataset import get_dataset
 from options import opt
 
+dataset = get_dataset(opt.dataroot)
 
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
+                                         shuffle=True, num_workers=1)
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# load model and pre-trained weights
+netE = Encoder().to(device)
+netG = Generator().to(device)
+netR = FinalAgeRegressor().to(device)
+
+if __name__ == '__main__':
+    for epoch in range(opt.epoch_num):
+        for i, (src_img, src_age, _) in enumerate(dataloader):
+            print(epoch, i)
