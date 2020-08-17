@@ -1,6 +1,3 @@
-'''
-Inspired by https://blog.csdn.net/woshicao11/article/details/78318156
-'''
 import torch
 from torch.utils.data import Dataset
 
@@ -58,9 +55,3 @@ class get_dataset(Dataset):
 
     def __len__(self):
         return len(self.img_list)
-
-
-if __name__ == '__main__':
-    pprint.pprint(get_img_list('./14'), width=999)
-    cacd = get_dataset('./CACD2000')  # 3+ seconds
-    pprint.pprint(cacd[0])

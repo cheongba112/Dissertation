@@ -27,3 +27,4 @@ if __name__ == '__main__':
     for epoch in range(opt.epoch_num):
         for i, (src_img, src_age, _) in enumerate(dataloader):
             print(epoch, i)
+

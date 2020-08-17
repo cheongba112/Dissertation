@@ -1,5 +1,6 @@
 import os, random, csv, time
 import numpy as np
+from matplotlib import pyplot as plt
 
 import torch
 from torch.utils.data import DataLoader
@@ -14,13 +15,13 @@ from misc import *
 local_debug = True
 
 # dataset
-if local_debug:
-    opt.dataroot = './cacd_lite'
 dataset = get_dataset(opt.dataroot)
+testset = get_dataset('./cacd_test')
 
 # dataloader
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
                                          shuffle=True, num_workers=1)
+testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=1)
 
 # use cpu or gpu as device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -55,15 +56,17 @@ optimvecD = optim.Adam(netvecD.parameters(), lr=0.0002, betas=(0.5, 0.999))
 if __name__ == '__main__':
     # start = time.time()
 
-    if not local_debug:
-        with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
-            w = csv.writer(F)
-            w.writerow(['epoch', 'batch', 
-                'loss_ageR', 
-                'loss_imgD_T', 'loss_imgD_F', 
-                'loss_vecD_T', 'loss_vecD_F', 
-                'loss_l1_G', 'loss_age_G', 'loss_img_G', 'loss_vec_G', 'loss_tv_G', 
-                'syn_age'])
+    if not os.path.exists('./train_result'):
+        os.makedirs('./train_result/pics')
+
+    with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
+        w = csv.writer(F)
+        w.writerow(['epoch', 'batch', 
+            'loss_ageR', 
+            'loss_imgD_T', 'loss_imgD_F', 
+            'loss_vecD_T', 'loss_vecD_F', 
+            'loss_l1_G', 'loss_age_G', 'loss_img_G', 'loss_vec_G', 'loss_tv_G', 
+            'syn_age'])
 
     for epoch in range(opt.epoch_num):
         print('Epoch: %d' % (epoch))
@@ -147,7 +150,7 @@ if __name__ == '__main__':
             # tv loss
             loss_tv_G = TV_Loss(syn_img)
 
-            loss_G = loss_l1_G + 0.0001 * loss_age_G + 0.0001 * loss_img_G + 0.01 * loss_vec_G + loss_tv_G
+            loss_G = loss_l1_G + 0.0001 * loss_age_G + 0.0002 * loss_img_G + 0.01 * loss_vec_G + loss_tv_G
             loss_G.backward()
 
             optimE.step()
@@ -156,32 +159,47 @@ if __name__ == '__main__':
             # print(time.time() - start)
 
             # ------------------------------------------------------------------
-            if local_debug:
-                print(epoch, i, 
-                    tl(loss_ageR), 
-                    tl(loss_imgD_T), tl(loss_imgD_F), 
-                    tl(loss_vecD_T), tl(loss_vecD_F), 
-                    tl(loss_l1_G), tl(loss_age_G), tl(loss_img_G), tl(loss_vec_G), tl(loss_tv_G), 
-                    tl(syn_age[0]))
-                break
-            else:
-                if not i % 100:
-                    utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
-                    with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
-                        writer = csv.writer(F)
-                        writer.writerow([epoch, i, 
-                            tl(loss_ageR), 
-                            tl(loss_imgD_T), tl(loss_imgD_F), 
-                            tl(loss_vecD_T), tl(loss_vecD_F), 
-                            tl(loss_l1_G), tl(loss_age_G), tl(loss_img_G), tl(loss_vec_G), tl(loss_tv_G), 
-                            tl(syn_age[0])])
+            # save loss info every 500 batchs
+            if not i % 500:
+                # utils.save_image(syn_img, './train_result/pics/%d_%d.jpg' % (epoch, i), normalize=True)
+                with open('./train_result/train_result.csv', 'a', encoding='utf-8', newline='') as F:
+                    writer = csv.writer(F)
+                    writer.writerow([epoch, i, 
+                        tl(loss_ageR), 
+                        tl(loss_imgD_T), tl(loss_imgD_F), 
+                        tl(loss_vecD_T), tl(loss_vecD_F), 
+                        tl(loss_l1_G), tl(loss_age_G), tl(loss_img_G), tl(loss_vec_G), tl(loss_tv_G), 
+                        tl(syn_age[0])])
 
-        if local_debug:
-            break
+        # generate test result every epoch
+        for src_img, _, _ in testloader:
+            src_img = src_img.to(device)
+            syn_age = torch.tensor([10, 20, 30, 40, 50, 60]).to(device)
+            syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
+            for j, age in enumerate(syn_age):
+                syn_age_onehot[j][age - 1] = 1.
+            syn_vec = netE(src_img)
+            syn_img = netG(syn_vec, syn_age_onehot)
+            imgs = torch.cat((src_img, syn_img), 0)
+            utils.save_image(imgs, './train_result/pics/%d.jpg' % (epoch), normalize=True)
 
-    if not local_debug:
-        torch.save(netE.state_dict(),    './train_result/netE.pth')
-        torch.save(netG.state_dict(),    './train_result/netG.pth')
-        torch.save(netageR.state_dict(), './train_result/netageR.pth')
-        torch.save(netimgD.state_dict(), './train_result/netimgD.pth')
-        torch.save(netvecD.state_dict(), './train_result/netvecD.pth')
+    # save model info after training
+    torch.save(netE.state_dict(),    './train_result/netE.pth')
+    torch.save(netG.state_dict(),    './train_result/netG.pth')
+    torch.save(netageR.state_dict(), './train_result/netageR.pth')
+    torch.save(netimgD.state_dict(), './train_result/netimgD.pth')
+    torch.save(netvecD.state_dict(), './train_result/netvecD.pth')
+
+    # print loss line charts
+    with open('./train_result/train_result.csv', 'r') as F:
+        r = csv.reader(F)
+        data = [row for row in r]
+        for i in range(2, len(data[0])):
+            col = [row[i] for row in data]
+            label = col[0]
+            value = []
+            for d in col[1:]:
+                value.append(float(d))
+            plt.plot(range(len(value)), value, '-')
+            plt.ylabel(label)
+            plt.savefig('./' + label + '.jpg')
