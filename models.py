@@ -18,7 +18,7 @@ class Encoder(nn.Module):  # 3 * 224 * 224 -> 50
             nn.ReLU(),  # 512 7 7
             nn.Flatten(),
             nn.Linear(512 * 7 * 7, 50),
-            nn.Tanh()   # z, 50, range between (-1, 1)
+            nn.Sigmoid()   # z, 50, range between (0, 1)
         )
 
     def forward(self, x):
@@ -29,7 +29,7 @@ class Generator(nn.Module):  # 50 + 100 -> 3 * 224 * 224
     def __init__(self):
         super(Generator, self).__init__()
         self.decode_fc = nn.Sequential(
-            nn.Linear(150, 7 * 7 * 1024),
+            nn.Linear(10 + 50, 7 * 7 * 1024),
             nn.ReLU(),
         )
         self.decode_deconv = nn.Sequential(

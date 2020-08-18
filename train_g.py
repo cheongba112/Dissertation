@@ -12,16 +12,14 @@ from get_dataset import get_dataset
 from options import opt
 from misc import *
 
-local_debug = True
-
 # dataset
 dataset = get_dataset(opt.dataroot)
-testset = get_dataset('./cacd_test')
+validset = get_dataset(opt.dataroot + '_valid')
 
 # dataloader
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
                                          shuffle=True, num_workers=1)
-testloader = torch.utils.data.DataLoader(testset, batch_size=8, shuffle=False, num_workers=1)
+validloader = torch.utils.data.DataLoader(validset, batch_size=8, shuffle=False, num_workers=1)
 
 # use cpu or gpu as device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -65,8 +63,7 @@ if __name__ == '__main__':
             'loss_ageR', 
             'loss_imgD_T', 'loss_imgD_F', 
             'loss_vecD_T', 'loss_vecD_F', 
-            'loss_l1_G', 'loss_age_G', 'loss_img_G', 'loss_vec_G', 'loss_tv_G', 
-            'syn_age'])
+            'loss_l1_G', 'loss_age_G', 'loss_img_G', 'loss_vec_G', 'loss_tv_G'])
 
     for epoch in range(opt.epoch_num):
         print('Epoch: %d' % (epoch))
@@ -75,26 +72,29 @@ if __name__ == '__main__':
             print('Batch: %d' % (i))
             
             # prepare batch data
+            src_age = (src_age // 5) - 3
+            src_age += (src_age < 0).type(torch.LongTensor)  # 14 -> -1 -> 0
+
             src_age = src_age.to(device)
             src_img = src_img.to(device)
             
-            pri_vec = torch.FloatTensor(src_age.size()[0], 50).uniform_(-1, 1).to(device)
+            pri_vec = torch.FloatTensor(src_age.size()[0], 50).uniform_(0, 1).to(device)
             
             real_label  = torch.full(src_age.size(), 1, device=device)  # warning
             false_label = torch.full(src_age.size(), 0, device=device)  # warning
             
-            src_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
+            src_age_onehot = torch.zeros(src_age.size()[0], 10).to(device)
             for j, age in enumerate(src_age):
-                src_age_onehot[j][age - 1] = 1.  # 0th pos -> 1 year old
+                src_age_onehot[j][age] = 1.  # 0th pos -> 1 year old
 
-            syn_age = torch.LongTensor(src_age.size()).fill_(np.random.randint(10, 71)).to(device)  # 10 - 70 years old
-            syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
-            for j, age in enumerate(syn_age):
-                syn_age_onehot[j][age - 1] = 1.
+            # syn_age = torch.LongTensor(src_age.size()).fill_(np.random.randint(10, 71)).to(device)  # 10 - 70 years old
+            # syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
+            # for j, age in enumerate(syn_age):
+            #     syn_age_onehot[j][age - 1] = 1.
 
             # generate synthesized images
             syn_vec = netE(src_img)
-            syn_img = netG(syn_vec, syn_age_onehot)
+            syn_img = netG(syn_vec, src_age_onehot)
 
             # ------------------------------------------------------------------
             # train age Regressor
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
             # age R loss
             output_age_G = netageR(syn_img).view(-1)
-            loss_age_G = MSE(output_age_G.float(), syn_age.float())
+            loss_age_G = MSE(output_age_G.float(), src_age.float())
             loss_age_G = loss_age_G * 0.01
 
             # image D loss
@@ -168,11 +168,10 @@ if __name__ == '__main__':
                         tl(loss_ageR), 
                         tl(loss_imgD_T), tl(loss_imgD_F), 
                         tl(loss_vecD_T), tl(loss_vecD_F), 
-                        tl(loss_l1_G), tl(loss_age_G), tl(loss_img_G), tl(loss_vec_G), tl(loss_tv_G), 
-                        tl(syn_age[0])])
+                        tl(loss_l1_G), tl(loss_age_G), tl(loss_img_G), tl(loss_vec_G), tl(loss_tv_G)])
 
         # generate test result every epoch
-        for src_img, _, _ in testloader:
+        for src_img, _, _ in validloader:
             src_img = src_img.to(device)
             syn_age = torch.tensor([10, 20, 30, 40, 50, 60]).to(device)
             syn_age_onehot = - torch.ones(src_age.size()[0], 100).to(device)
@@ -203,3 +202,4 @@ if __name__ == '__main__':
             plt.plot(range(len(value)), value, '-')
             plt.ylabel(label)
             plt.savefig('./' + label + '.jpg')
+            plt.clf()

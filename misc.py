@@ -50,7 +50,7 @@ def line_chart(col):
 
     plt.plot(range(len(data)), data, '-')
     plt.ylabel(label)
-    plt.savefig('./' + str(label) + '.jpg')
+    plt.savefig('./train_result/' + str(label) + '.jpg')
 
 if __name__ == '__main__':
     dataset_split('./CACD2000')

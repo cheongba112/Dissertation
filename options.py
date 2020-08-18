@@ -5,5 +5,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', required=False, type=int, default=32,            help='batch size')
 parser.add_argument('--dataroot',   required=False, type=str, default='./CACD2000',  help='path to dataset')
 parser.add_argument('--epoch_num',  required=False, type=int, default=20,            help='epoch number')
+parser.add_argument('--netE_path',  required=False, type=str, help='path to pre-trained encoder model')
+parser.add_argument('--netG_path',  required=False, type=str, help='path to pre-trained generator model')
 
 opt = parser.parse_args()
