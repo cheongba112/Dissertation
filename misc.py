@@ -39,18 +39,3 @@ def dataset_split(root_path):
     tbmoved = random.sample(range(len(files)), 8)
     for i in tbmoved:
         shutil.move(os.path.join(old_root, files[i]), os.path.join(valid_root, files[i]))
-
-# save line chart of certain column
-def line_chart(col):
-    label = col[0]
-    data = []
-
-    for d in col[1:]:
-        data.append(float(d))
-
-    plt.plot(range(len(data)), data, '-')
-    plt.ylabel(label)
-    plt.savefig('./train_result/' + str(label) + '.jpg')
-
-if __name__ == '__main__':
-    dataset_split('./CACD2000')

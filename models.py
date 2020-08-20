@@ -18,7 +18,7 @@ class Encoder(nn.Module):  # 3 * 224 * 224 -> 50
             nn.ReLU(),  # 512 7 7
             nn.Flatten(),
             nn.Linear(512 * 7 * 7, 50),
-            nn.Sigmoid()   # z, 50, range between (0, 1)
+            nn.Tanh()   # z, 50, range between (-1, 1)
         )
 
     def forward(self, x):
@@ -74,6 +74,50 @@ class AgeRegressor(nn.Module):  # 3 * 224 * 224 -> 1(age)
             nn.Linear(1024, 1),
         )
     
+    def forward(self, img):
+        return self.model(img)
+
+
+class Classifier(nn.Module):
+    def __init__(self):
+        super(Classifier, self).__init__()
+        self.model = nn.Sequential(
+            nn.Conv2d(3, 64, 3, 1, 1),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, 1, 1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, 3, 1, 1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(128, 256, 3, 1, 1),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, 3, 1, 1),
+            nn.ReLU(),
+            # nn.Conv2d(256, 256, 3, 1, 1),
+            # nn.ReLU(),
+            # nn.Conv2d(256, 256, 3, 1, 1),
+            # nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(256, 512, 3, 1, 1),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.ReLU(),
+            # nn.Conv2d(512, 512, 3, 1, 1),
+            # nn.ReLU(),
+            # nn.Conv2d(512, 512, 3, 1, 1),
+            # nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Flatten(),
+            nn.Linear(512 * 8 * 8, 4096),
+            nn.ReLU(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(),
+            nn.Linear(4096, 10),
+            nn.LogSoftmax(dim=1),
+        )
     def forward(self, img):
         return self.model(img)
 
