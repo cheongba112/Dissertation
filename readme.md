@@ -1,19 +1,33 @@
-# Requirement of Dataset
-- contains of multiple identity and age labels
-- each identity has at least two images
-- each image has its age label
+# Aging Face Generation with c-GAN
   
-# Data Importing Logic
-### get_dataset.py
-Firstly, use function to extract each file name and age label of all images in the folder, storing with dictionary(as a hashmap)  
-Then append file_name_a, age_label_a, file_name_b into a list according to the dictionary, where file_b has the same identity with file_a  
-The get_dataset class open and preprocess file_a and file_b, and turn age_label_a into integer  
-loading CACD2000 dataset cost about 3 sec  
+Using a c-GAN framework to generate aging faces. Encoder encodes the source image to obtain latent vector, which is input into generator along with age label. Multiple adversarial networks are added to maintain identity features and age features.  
   
-# Training and Testing Steps
-- general cGAN training
-- regressor training with pre-trained generator(fixed)
-- testing with pre-trained generator and regressor
+The following pictures are overall frameworks of face generation and age estimation models.  
+  
+![readme_pics/gframe.png]
+![readme_pics/rframe.png]
+  
+### Prerequisites
+- torch==1.5.1
+- torchvision==0.6.1
+- matplotlib==3.1.0
+- Pillow==6.1.0
+- numpy==1.16.4
+- requests==2.22.0
+```
+pip install -r requirements.txt
+```
+
+### Dataset
+Download UTKFace dataset for model training. Devide the dataset into training set as well as test set and validation set.
+```
+python prepare.py
+```
+
+### Training
+```
+
+```
   
 
 
