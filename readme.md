@@ -4,10 +4,12 @@ Using a c-GAN framework to generate aging faces. Encoder encodes the source imag
   
 The following pictures are overall frameworks of face generation and age estimation models.  
   
-![readme_pics/gframe.png]
-![readme_pics/rframe.png]
+![](readme_pics/gframe.png)
+![](readme_pics/rframe.png)
   
 ### Prerequisites
+Python 3  
+  
 - torch==1.5.1
 - torchvision==0.6.1
 - matplotlib==3.1.0
