@@ -77,6 +77,7 @@ def main():
     for i in range(10):
         print('group %d L1 loss: %f'% (i, err[i] / num[i]))
 
+    print(sum(err) / sum(num))
         
 if __name__ == '__main__':
     main()

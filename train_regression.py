@@ -12,8 +12,6 @@ from misc import *
 from get_dataset import *
 from models import *
 
-# --------------------------------------------------
-# main
 
 res_pth = './regression_result/'
 

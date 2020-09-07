@@ -15,8 +15,6 @@ from misc import *
 from get_dataset import *
 from models import *
 
-# -----------------------------------------------------------------
-# main
 
 val_bth = 8
 res_pth = './generation_result/'
@@ -99,10 +97,10 @@ if __name__ == '__main__':
             for j, age in enumerate(src_age):
                 src_age_onehot[j][age] = 1.
             
-            syn_age = torch.LongTensor(src_age.size()).fill_(np.random.randint(10)).to(device)
-            syn_age_onehot = torch.zeros(src_age.size()[0], 10).to(device)
-            for j, age in enumerate(syn_age):
-                syn_age_onehot[j][age] = 1.
+            # syn_age = torch.LongTensor(src_age.size()).fill_(np.random.randint(10)).to(device)
+            # syn_age_onehot = torch.zeros(src_age.size()[0], 10).to(device)
+            # for j, age in enumerate(syn_age):
+            #     syn_age_onehot[j][age] = 1.
 
             pri_vec = torch.FloatTensor(src_age.size()[0], 50).uniform_(0, 1).to(device)
 
