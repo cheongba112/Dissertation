@@ -69,7 +69,7 @@ def main():
                     writer = csv.writer(F)
                     writer.writerow([i, tl(loss_values[0]), tl(src_age[0]), tl(pred_age[0]), tl(loss_r)])
 
-    torch.save(netR.state_dict(), res_pth + 'netR.pth')
+    torch.save(netR.state_dict(), './netR.pth')
 
 
 if __name__ == '__main__':
