@@ -21,15 +21,30 @@ pip install -r requirements.txt
 ```
 
 ### Dataset
-Download UTKFace dataset for model training. Devide the dataset into training set as well as test set and validation set.
+Download [UTKFace](https://susanqq.github.io/UTKFace/) dataset for model training.
+```
+python download_data.py --link 0BxYys69jI14kYVM3aVhKS1VhRUk --file_name UTKFace.tar.gz
+```
+
+Devide the dataset into training set as well as test set and validation set.
 ```
 python prepare.py
 ```
 
 ### Training
 ```
+python train_generation.py
+python train_regression.py
+```
 
+### Testing
+```
+python test.py
 ```
   
+### Experimental Result
+![Face Generation](readme_pics/C_49.jpg)
+![Age Estimation L1 Loss under Each Age Group](readme_pics/gl1.png)
+
 
 
