@@ -41,7 +41,7 @@ def main():
     netR.eval()
     
     err = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
-    num = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    num = [0,  0,  0,  0,  0,  0,  0,  0,  0,  0 ]
     
     for i, (src_img, src_age) in enumerate(dataloader):
 
