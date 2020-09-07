@@ -33,11 +33,11 @@ def main():
     if not os.path.exists(res_pth):
         os.makedirs(res_pth)
 
-    netE.load_state_dict(torch.load('./netE.pth'))
+    netE.load_state_dict(torch.load(opt.netE_path))
     netE.eval()
-    netG.load_state_dict(torch.load('./netG.pth'))
+    netG.load_state_dict(torch.load(opt.netG_path))
     netG.eval()
-    netR.load_state_dict(torch.load('./netR.pth'))
+    netR.load_state_dict(torch.load(opt.netR_path))
     netR.eval()
     
     err = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]

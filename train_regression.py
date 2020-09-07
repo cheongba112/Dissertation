@@ -17,7 +17,7 @@ res_pth = './regression_result/'
 
 dataset = get_dataset(opt.dataroot)
 
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=1)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=1)  # pure SGD
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -34,12 +34,12 @@ def main():
     if not os.path.exists(res_pth):
         os.makedirs(res_pth)
 
-    netE.load_state_dict(torch.load('./netE.pth'))
+    netE.load_state_dict(torch.load(opt.netE_path))
     netE.eval()
-    netG.load_state_dict(torch.load('./netG.pth'))
+    netG.load_state_dict(torch.load(opt.netG_path))
     netG.eval()
 
-    for epoch in range(3):
+    for epoch in range(opt.regre_epoch):
         for i, (src_img, src_age) in enumerate(dataloader):
             print(i)
             
