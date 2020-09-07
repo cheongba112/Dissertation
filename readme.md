@@ -43,8 +43,10 @@ python test.py
 ```
   
 ### Experimental Result
-![Face Generation](readme_pics/C_49.jpg)
-![Age Estimation L1 Loss under Each Age Group](readme_pics/gl1.png)
+Face Generation
+![](readme_pics/C_49.jpg)
+Age Estimation L1 Loss under Each Age Group
+![](readme_pics/gl1.png)
 
 
 
