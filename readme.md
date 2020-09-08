@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ```
 
 ### Dataset
-Download [UTKFace](https://susanqq.github.io/UTKFace/) dataset and decompress for model training.
+Download [UTKFace](https://drive.google.com/file/d/1yf0Z3X2IovVpm4rN7NQ9GmAlbOHITD8f/view?usp=sharing) dataset and decompress for model training.
 ```
 python download_data.py --link 1yf0Z3X2IovVpm4rN7NQ9GmAlbOHITD8f --file_name UTKFace.tar
 tar -xvf UTKFace.tar
