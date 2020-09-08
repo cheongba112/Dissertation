@@ -1,4 +1,4 @@
-import os, random, csv, time, re, shutil
+import os, random, csv, time, re, shutil, argparse
 import numpy as np
 # from matplotlib import pyplot as plt
 
@@ -10,12 +10,20 @@ import torch.optim as optim
 from torchvision import utils
 from torchvision.models import googlenet
 
-from options import *
 from misc import *
 from get_dataset import *
 from models import *
 
+# adjustable options
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataroot',   required=False, type=str, default='./UTKFace',  help='path to dataset')
+parser.add_argument('--epoch_num',  required=False, type=int, default=50,           help='epoch number')
+parser.add_argument('--batch_size', required=False, type=int, default=16,           help='batch size')
+parser.add_argument('--save_Epth',  required=False, type=str, default='./netE.pth', help='encoder save path')
+parser.add_argument('--save_Gpth',  required=False, type=str, default='./netG.pth', help='generator save path')
+opt = parser.parse_args()
 
+# fixed options
 val_bth = 8
 res_pth = './generation_result/'
 
@@ -24,8 +32,7 @@ dataset = get_dataset(opt.dataroot)
 validset = get_dataset(opt.dataroot + '_valid')
 
 # dataloader
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size,
-                                         shuffle=True, num_workers=1)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=1)
 validloader = torch.utils.data.DataLoader(validset, batch_size=val_bth, shuffle=False, num_workers=1)
 
 # use cpu or gpu as device
@@ -202,7 +209,7 @@ if __name__ == '__main__':
                 syn_vec = netE(src_img, syn_age_onehot)
                 syn_img = netG(syn_vec, syn_age_onehot)
                 imgs = torch.cat((imgs, syn_img), 0)
-            utils.save_image(imgs, './generation_result/pics/C_%d.jpg' % (epoch), normalize=True)
+            utils.save_image(imgs, './generation_result/pics/%d.jpg' % (epoch), normalize=True)
 
     # print loss line charts
     # with open(res_pth + 'train_result.csv', 'r') as F:
@@ -219,5 +226,5 @@ if __name__ == '__main__':
     #         plt.savefig(res_pth + label + '.jpg')
     #         plt.clf()
     
-    torch.save(netE.state_dict(), './netE.pth')
-    torch.save(netG.state_dict(), './netG.pth')
+    torch.save(netE.state_dict(), opt.save_Epth)
+    torch.save(netG.state_dict(), opt.save_Gpth)

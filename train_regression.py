@@ -1,18 +1,25 @@
-import os, random, csv, time, re, shutil
+import os, csv, argparse
 import numpy as np
-# from matplotlib import pyplot as plt
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
 
-from options import *
 from misc import *
 from get_dataset import *
 from models import *
 
+# adjustable options
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataroot',    required=False, type=str, default='./UTKFace',  help='path to dataset')
+parser.add_argument('--regre_epoch', required=False, type=int, default=3,            help='regression training epoch number')
+parser.add_argument('--netE_path',   required=False, type=str, default='./netE.pth', help='path to pre-trained encoder model')
+parser.add_argument('--netG_path',   required=False, type=str, default='./netG.pth', help='path to pre-trained generator model')
+parser.add_argument('--save_Rpth',   required=False, type=str, default='./netR.pth', help='regressor save path')
+opt = parser.parse_args()
 
+# fised options
 res_pth = './regression_result/'
 
 dataset = get_dataset(opt.dataroot)
@@ -69,7 +76,7 @@ def main():
                     writer = csv.writer(F)
                     writer.writerow([i, tl(loss_values[0]), tl(src_age[0]), tl(pred_age[0]), tl(loss_r)])
 
-    torch.save(netR.state_dict(), './netR.pth')
+    torch.save(netR.state_dict(), opt.save_Rpth)
 
 
 if __name__ == '__main__':

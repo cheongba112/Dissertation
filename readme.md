@@ -21,24 +21,27 @@ pip install -r requirements.txt
 ```
 
 ### Dataset
-Download [UTKFace](https://susanqq.github.io/UTKFace/) dataset for model training.
+Download [UTKFace](https://susanqq.github.io/UTKFace/) dataset and decompress for model training.
 ```
-python download_data.py --link 0BxYys69jI14kYVM3aVhKS1VhRUk --file_name UTKFace.tar.gz
+python download_data.py --link 1yf0Z3X2IovVpm4rN7NQ9GmAlbOHITD8f --file_name UTKFace.tar.gz
+tar -zxvf UTKFace.tar.gz
 ```
 
 Devide the dataset into training set as well as test set and validation set.
 ```
-python prepare.py
+python partition.py --path UTKFace
 ```
 
-### Training
+### Training Generative Model
 ```
 python train_generation.py
-python train_regression.py
 ```
 
-### Pre-trained Models
-[Link](https://drive.google.com/drive/folders/1A4E_wBcAri4cuZN4Xy0BPpq2YTeLUpR7)
+### Training Estimation Model (pre-trained generative model needed)
+[Pre-trained Models](https://drive.google.com/drive/folders/1A4E_wBcAri4cuZN4Xy0BPpq2YTeLUpR7)
+```
+python train_regression.py
+```
 
 ### Testing
 ```

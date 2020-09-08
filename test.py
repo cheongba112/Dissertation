@@ -1,20 +1,26 @@
-import os, random, csv, time, re, shutil
+import argparse
 import numpy as np
-# from matplotlib import pyplot as plt
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-import torch.optim as optim
 
-from options import *
 from misc import *
 from get_dataset import *
 from models import *
 
+# adjustable options
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataroot',   required=False, type=str, default='./UTKFace',  help='path to dataset')
+parser.add_argument('--netE_path',  required=False, type=str, default='./netE.pth', help='path to pre-trained encoder model')
+parser.add_argument('--netG_path',  required=False, type=str, default='./netG.pth', help='path to pre-trained generator model')
+parser.add_argument('--netR_path',  required=False, type=str, default='./netR.pth', help='path to pre-trained age regressor model')
+opt = parser.parse_args()
 
+# fixed options
 res_pth = './test_result/'
 
+# test set
 dataset = get_dataset(opt.dataroot + '_test')
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1)
@@ -75,7 +81,7 @@ def main():
         else:               err[9] += loss_r.tolist(); num[9] += 1 
     
     for i in range(10):
-        print('group %d L1 loss: %f'% (i, err[i] / num[i]))
+        print('group %d L1 loss: %f' % (i, err[i] / num[i]))
 
     print(sum(err) / sum(num))
         
